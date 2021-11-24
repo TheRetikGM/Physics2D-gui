@@ -197,7 +197,6 @@ void Game::ProcessInput(float dt)
 		printf("----- Stats ------\n");
 		printf("Update step: %f ms\n", w1.ElapsedMilliseconds());
 		printf("	 Bodies: %i\n", world->BodyCount());
-		printf("    Sorting: %s\n", world->CollisionTree->SortOnTests ? "yes" : "no");
 		printf("------------------\n");
 		KeysProcessed[GLFW_KEY_LEFT_CONTROL] = true;
 	}
@@ -282,6 +281,14 @@ void Game::Render()
 
 	if (renderDebugLines)
 		RenderQuadTreeDebugLines(world->CollisionTree->root);
+
+	std::string controls = 
+		"(" + std::string(renderDebugLines ? "on" : "off") + ") F1 - render quadtree\n"
+		"(" + std::string(debugColors ? "on" : "off") + ") F2 - colors\n"
+		"(" + std::string(world->CollisionTree->SortOnTests ? "on" : "off") +  ") F3 - sort collision tests\n"
+		"Left ctrl - print world info";
+
+	text_renderer->RenderText(controls, 5.0f, 5.0f, 1.5f, glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
 // Callbacks
