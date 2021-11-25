@@ -161,39 +161,41 @@ void CollisionQuadTree::RemoveObject(RigidBody* pObject)
 	// However, don't delete root subtree.
 	cleanUpTree(pTree);
 }
+// All of the empty subtrees up from this pTree will be deleted.
 void CollisionQuadTree::cleanUpTree(Node* pTree)
 {
 	if (pTree != root)
 	{
 		Node* pParent = pTree->pParent;
+		// Get the parent pointer, so that when we delete the
+		// subtree, it does not point to invalid memory.
 		int i;
 		for (i = 0; i < 4; i++)
 			if (pTree->pParent->pChild[i] == pTree)
 				break;
 		Node*& _pTree = pTree->pParent->pChild[i];
 
+		// Only delete subtree if it contains no objects
+		// and all of its children are empty.
 		if (!_pTree->pObjList) {
 			for (i = 0; i < 4; i++)
-				if (_pTree->pChild[i])
-					break;
+				if (_pTree->pChild[i]) break;
 			if (i == 4) {
 				delete _pTree;
 				_pTree = nullptr;
 			}
 		}
+
+		// Recursively go up the tree.
 		cleanUpTree(pParent);
 	}
 }
 void CollisionQuadTree::UpdateObject(RigidBody* pObject) 
 {
-	RemoveObject(pObject);
-	InsertObject(pObject);
-	return;
 	Node*& pNode = (Node*&)pObject->pParentNode;
+	// If object has no parent, it cannot be updated.
 	if (!pNode)
 		return;
-	else
-		pNode = pNode->pParent;
 
 	// Traverse the tree upwards and try to insert
 	// at each parent node. If the linked list of
@@ -218,6 +220,63 @@ void CollisionQuadTree::TestAllCollisions(float& dt)
 	else
 		testAllCollisions(root, dt);
 }
+void CollisionQuadTree::testCollisions_sort(RigidBody* pA, RigidBody* pObjList, float& dt)
+{
+	static RigidBody* pB;
+	RigidBody* pRoot = nullptr;
+	for (pB = pObjList; pB; pB = pB->pNextObject) {
+		if (pA == pB)
+			continue;
+
+		// Distence between centers. No need to compute sqrt,
+		// as we don't need precise value to compare them.
+		const glm::vec2& bp = pB->position;
+		const glm::vec2& ba = pA->position;
+		glm::vec2 ab;
+		ab.x = bp.x - ba.x;
+		ab.y = bp.y - ba.y;
+		pB->dist = ab.x * ab.x + ab.y * ab.y;
+
+		// Direct insert of pB into the sorting list. //
+		pB->pNextSortNode = nullptr;
+		// Handle missing root.
+		if (!pRoot)
+			pRoot = pB;
+		// Handle insert as first element.
+		else if (pB->dist < pRoot->dist)
+		{
+			pB->pNextSortNode = pRoot;
+			pRoot = pB;
+		}
+		// Actual direct insert into linked list.
+		else
+		{
+			RigidBody* pPrevNode = pRoot;
+			RigidBody* pN = pRoot->pNextSortNode;
+			for (pN; pN; pN = pN->pNextSortNode) {
+				if (pB->dist < pN->dist) {
+					pPrevNode->pNextSortNode = pB;
+					pB->pNextSortNode = pN;
+					break;
+				}
+				pPrevNode = pN;
+			}
+			// Handle insert as last element.
+			if (pN == nullptr)
+				pPrevNode->pNextSortNode = pB;
+		}
+	}
+	// Test againts all objects in linked list 
+	// and clear linked list pointers.
+	RigidBody* pNode = pRoot;
+	while (pNode)
+	{
+		RigidBody* pNext = pNode->pNextSortNode;
+		OnCollisionTest(pA, pNode, dt);
+		pNode->pNextSortNode = nullptr;
+		pNode = pNext;
+	}
+}
 void CollisionQuadTree::testAllCollisions(Node* pTree, float& dt)
 {
 	if (depth >= MAX_DEPTH)
@@ -231,12 +290,18 @@ void CollisionQuadTree::testAllCollisions(Node* pTree, float& dt)
 		RigidBody* pA, * pB;
 		for (pA = ancestorStack[n]->pObjList; pA; pA = pA->pNextObject)
 		{
-			for (pB = pTree->pObjList; pB; pB = pB->pNextObject) {
-				// Avoid testing both A->B and B->A
-				if (pA == pB)
-					break;
-				// Perform the collision test between A and B.
-				OnCollisionTest(pA, pB, dt);
+			// Test vs kinematic body should be in sorted order.
+			if (pA->IsKinematic)
+				testCollisions_sort(pA, pTree->pObjList, dt);
+			else
+			{
+				for (pB = pTree->pObjList; pB; pB = pB->pNextObject) {
+					// Avoid testing both A->B and B->A
+					if (pA == pB)
+						break;
+					// Perform the collision test between A and B.
+					OnCollisionTest(pA, pB, dt);
+				}
 			}
 		}
 	}
@@ -251,8 +316,6 @@ void CollisionQuadTree::testAllCollisions(Node* pTree, float& dt)
 }
 void CollisionQuadTree::testAllCollisions_sort(Node* pTree, float& dt)
 {
-	static float dist = 0;
-
 	if (depth >= MAX_DEPTH)
 		return;
 
@@ -261,32 +324,14 @@ void CollisionQuadTree::testAllCollisions_sort(Node* pTree, float& dt)
 		RigidBody* pA, * pB;
 		for (pA = ancestorStack[n]->pObjList; pA; pA = pA->pNextObject)
 		{
-			for (pB = pTree->pObjList; pB; pB = pB->pNextObject) {
-				if (pA == pB)
-					break;
-
-				// Distence between centers. No need to compute sqrt,
-				// as we don't need precise value to compare them.
-				glm::vec2 ab = pB->GetCenter() - pA->GetCenter();
-				dist = ab.x * ab.x + ab.y * ab.y;
-				
-				// Direct insert of pB into the sorting list.
-				auto i = vSortList.begin();
-				for (i; i != vSortList.end(); i++)
-					if (dist < i->dist) break;
-				vSortList.emplace(i, sort_item{ dist, pB });
-			}
-			for (auto& item : vSortList)
-				OnCollisionTest(pA, item.pObject, dt);
-
-			vSortList.clear();
+			testCollisions_sort(pA, pTree->pObjList, dt);
 		}
 	}
 
 	// Recursively visit all existing children.
 	for (int i = 0; i < 4; i++)
 		if (pTree->pChild[i])
-			testAllCollisions(pTree->pChild[i], dt);
+			testAllCollisions_sort(pTree->pChild[i], dt);
 
 	// Remove current node from ancestor stack before returning.
 	depth--;

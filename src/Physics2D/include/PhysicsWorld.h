@@ -145,8 +145,9 @@ namespace Physics2D
 		glm::vec2	WorldCenter;
 		glm::vec2	WorldHalfSize;
 		std::function<void(RigidBody*, RigidBody*, float&)> OnCollisionTest;
-		bool SortOnTests = false;	// Perform collision tests in order based on distance between them.
-
+		// NOTE: can cause 1-10% performance decrease.
+		bool SortOnTests = false;	// Perform ALL collision tests in order based on distance between given objects.
+		
 		CollisionQuadTree(glm::vec2 w_min, glm::vec2 w_max);
 		// Note: Objects pointed to in quadtree should
 		// be deleted AFTER the quadtree is deleted.
@@ -176,8 +177,6 @@ namespace Physics2D
 		iterator end()	 const { return iterator::end(); }
 
 	protected:
-		struct sort_item { float dist; RigidBody* pObject; };
-		std::list<sort_item> vSortList;	// Used in case SortOnTests is set to true.
 		static const int MAX_DEPTH = 40;
 		Node* ancestorStack[MAX_DEPTH];			// Keeps tract of all ancestor object lists in a stack.
 		int depth = 0;	// Traversal of ancestorStack.
@@ -186,12 +185,19 @@ namespace Physics2D
 		void insertObject(Node* pTree, RigidBody* pObject);
 		void testAllCollisions(Node* pTree, float& dt);
 		void testAllCollisions_sort(Node* pTree, float& dt);
+		// Tests collision between pA and all objects in
+		// linked list in sorted order.
+		void testCollisions_sort(RigidBody* pA, RigidBody* pObjList, float& dt);
 		// Does the same as ObjectIsInWorld(), but it does so 
 		// on specific tree or subtree.
 		bool objectIsInTree(Node* pTree, RigidBody* pObject);
 		// Recursively deletes specific tree or subtree.
 		void deleteTree(Node*& pTree);
 		void reverseInsertObject(Node* pTree, RigidBody* pObject);
+		// Cleans emtpy subtrees in upwards recursion from given subtree.
 		void cleanUpTree(Node* pTree);
+
+		// Allow access to protected members.
+		friend class PhysicsWorld;
 	};
 }

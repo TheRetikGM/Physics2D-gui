@@ -134,11 +134,12 @@ void Game::Init()
 
 	// Initialize text renderer.
 	text_renderer = new TextRenderer(Width, Height);
-	text_renderer->Load(ASSETS_DIR "fonts/arial.ttf", 16);
+	text_renderer->Load(ASSETS_DIR "fonts/arial.ttf", 24);
 
 	// Init Physics world.
 	world = new PhysicsWorld(glm::vec2(0.0f, 0.0f), glm::vec2(float(Width), float(Height)), 50);
 	world->CollisionTree->SortOnTests = true;
+	world->Gravity = glm::vec2(0.0f, 0.0f);
 	// world->Gravity = glm::vec2(0.0f, 0.0f);
 	RegenerateMap(this);
 }
@@ -246,7 +247,7 @@ void RenderBodies(CollisionQuadTree::Node* pTree)
 	for (int i = 0; i < 4; i++)
 		RenderBodies(pTree->pChild[i]);
 
-	for (RigidBody* body = pTree->pObjList; body; body = body->pNextObject)
+	for (RigidBody* body = pTree->pObjList; body; body = body->GetNextObject())
 	{
 		ColliderType type = body->GetCollider()->GetType();
 		const AABB& aabb = body->GetAABB();
@@ -288,7 +289,7 @@ void Game::Render()
 		"(" + std::string(world->CollisionTree->SortOnTests ? "on" : "off") +  ") F3 - sort collision tests\n"
 		"Left ctrl - print world info";
 
-	text_renderer->RenderText(controls, 5.0f, 5.0f, 1.5f, glm::vec3(0.0f, 1.0f, 0.0f));
+	text_renderer->RenderText(controls, 5.0f, 5.0f, 1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
 // Callbacks
