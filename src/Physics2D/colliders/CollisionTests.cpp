@@ -45,7 +45,7 @@ void ClipPoints(std::vector<glm::vec2>& o_clippedPoints, glm::vec2 p1, glm::vec2
 	}
 }
 
-glm::vec2 GetCenter(std::vector<glm::vec2>& p)
+glm::vec2 GetCenter(const std::vector<glm::vec2>& p)
 {
 	glm::vec2 center(0.0f);
 	for (auto& i : p)
@@ -53,7 +53,7 @@ glm::vec2 GetCenter(std::vector<glm::vec2>& p)
 	center /= p.size();
 	return center;
 }
-void ProjectVertices(std::vector<glm::vec2>& v, glm::vec2 axis, float& o_min, float& o_max)
+void ProjectVertices(const std::vector<glm::vec2>& v, glm::vec2 axis, float& o_min, float& o_max)
 {
 	o_min = INFINITY;
 	o_max = -INFINITY;
@@ -64,10 +64,10 @@ void ProjectVertices(std::vector<glm::vec2>& v, glm::vec2 axis, float& o_min, fl
 		o_max = std::max(o_max, q);
 	}
 }
-bool SAT_CollisionCheck(std::vector<glm::vec2>& p1, std::vector<glm::vec2>& p2, CollisionInfo& info)
+bool SAT_CollisionCheck(const std::vector<glm::vec2>& p1, const std::vector<glm::vec2>& p2, CollisionInfo& info)
 {
-	std::vector<glm::vec2>* poly1 = &p1;
-	std::vector<glm::vec2>* poly2 = &p2;
+	const std::vector<glm::vec2>* poly1 = &p1;
+	const std::vector<glm::vec2>* poly2 = &p2;
 
 	info.depth = INFINITY;
 	info.normal = glm::vec2(0.0f);
@@ -223,15 +223,15 @@ bool Physics2D::CheckCollision(const CircleCollider* c1, const PolygonCollider* 
 }
 bool Physics2D::CheckCollision(const RectangleCollider* c1, const RectangleCollider* c2, CollisionInfo& info)
 {
-	return SAT_CollisionCheck((std::vector<glm::vec2>)c1->Vertices, (std::vector<glm::vec2>)c2->Vertices, info);
+	return SAT_CollisionCheck(c1->Vertices, (std::vector<glm::vec2>)c2->Vertices, info);
 }
 bool Physics2D::CheckCollision(const RectangleCollider* c1, const PolygonCollider* c2, CollisionInfo& info)
 {
-	return SAT_CollisionCheck((std::vector<glm::vec2>)c1->Vertices, (std::vector<glm::vec2>)c2->Vertices, info);
+	return SAT_CollisionCheck(c1->Vertices, (std::vector<glm::vec2>)c2->Vertices, info);
 }
 bool Physics2D::CheckCollision(const PolygonCollider* c1, const PolygonCollider* c2, CollisionInfo& info)
 {
-	return SAT_CollisionCheck((std::vector<glm::vec2>)c1->Vertices, (std::vector<glm::vec2>)c2->Vertices, info);
+	return SAT_CollisionCheck(c1->Vertices, (std::vector<glm::vec2>)c2->Vertices, info);
 }
 
 bool Physics2D::CheckCollision(const CircleCollider* c1, const CapsuleCollider* c2, CollisionInfo& info)	{ ReverseCheckCollision(c1, c2, info); }

@@ -13,7 +13,7 @@ namespace Physics2D
 		}
 
 		const float& GetRadius() const { return radius; }
-		const float &GetRadius(bool inUnits) const { return (inUnits && UnitConverter) ? UnitConverter->ToUnits(radius) : radius; }
+		float GetRadius(bool inUnits) const { return (inUnits && UnitConverter) ? UnitConverter->ToUnits(radius) : radius; }
 		void UpdateAABB() override {
 			aabb.position = Vertices[0] - glm::vec2(radius, radius);
 			aabb.size = glm::vec2(radius, radius) * 2.0f;

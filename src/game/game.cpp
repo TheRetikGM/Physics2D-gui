@@ -138,7 +138,6 @@ void Game::Init()
 
 	// Init Physics world.
 	world = new PhysicsWorld(glm::vec2(0.0f, 0.0f), glm::vec2(float(Width), float(Height)), 50);
-	world->CollisionTree->SortOnTests = true;
 	world->Gravity = glm::vec2(0.0f, 0.0f);
 	// world->Gravity = glm::vec2(0.0f, 0.0f);
 	RegenerateMap(this);
@@ -187,11 +186,6 @@ void Game::ProcessInput(float dt)
 	{
 		debugColors = !debugColors;
 		KeysProcessed[GLFW_KEY_F2] = true;
-	}
-	if (Keys[GLFW_KEY_F3] && !KeysProcessed[GLFW_KEY_F3])
-	{
-		world->CollisionTree->SortOnTests = !world->CollisionTree->SortOnTests;
-		KeysProcessed[GLFW_KEY_F3] = true;
 	}
 	if (Keys[GLFW_KEY_LEFT_CONTROL] && !KeysProcessed[GLFW_KEY_LEFT_CONTROL])
 	{
@@ -257,7 +251,7 @@ void RenderBodies(CollisionQuadTree::Node* pTree)
 		if (type == ColliderType::rectangle)
 			basic_renderer->RenderShape(br_Shape::rectangle, aabb.GetMin(true), aabb.GetSize(true), 0.0f, glm::vec3(1.0f));
 		else if (type == ColliderType::circle)
-			basic_renderer->RenderShape(br_Shape::circle_empty, aabb.GetMin(true), aabb.GetSize(true), 0.0f, glm::vec3(1.0f));
+			basic_renderer->RenderShape(body->IsStatic() ? br_Shape::circle : br_Shape::circle_empty, aabb.GetMin(true), aabb.GetSize(true), 0.0f, glm::vec3(1.0f));
 		text_renderer->RenderText(std::to_string(depth), center.x + offset.x, center.y + offset.y, 1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 
@@ -277,7 +271,7 @@ void Game::Render()
 		if (type == ColliderType::rectangle)
 			basic_renderer->RenderShape(br_Shape::rectangle, aabb.GetMin(true), aabb.GetSize(true), 0.0f, glm::vec3(1.0f));
 		else if (type == ColliderType::circle)
-			basic_renderer->RenderShape(br_Shape::circle_empty, aabb.GetMin(true), aabb.GetSize(true), 0.0f, glm::vec3(1.0f));
+			basic_renderer->RenderShape(body->IsStatic() ? br_Shape::circle : br_Shape::circle_empty, aabb.GetMin(true), aabb.GetSize(true), 0.0f, glm::vec3(1.0f));
 	}
 
 	if (renderDebugLines)
@@ -286,7 +280,6 @@ void Game::Render()
 	std::string controls = 
 		"(" + std::string(renderDebugLines ? "on" : "off") + ") F1 - render quadtree\n"
 		"(" + std::string(debugColors ? "on" : "off") + ") F2 - colors\n"
-		"(" + std::string(world->CollisionTree->SortOnTests ? "on" : "off") +  ") F3 - sort collision tests\n"
 		"Left ctrl - print world info";
 
 	text_renderer->RenderText(controls, 5.0f, 5.0f, 1.0f, glm::vec3(0.0f, 1.0f, 0.0f));

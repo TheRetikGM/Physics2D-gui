@@ -3,7 +3,7 @@
 #include "AABB.hpp"
 #include "RigidBody.h"
 #include "MeterUnitConverter.hpp"
-#include "helper.hpp"
+#include "Helper.hpp"
 #include <list>
 #include <cstdint>
 #include <map>
@@ -145,8 +145,6 @@ namespace Physics2D
 		glm::vec2	WorldCenter;
 		glm::vec2	WorldHalfSize;
 		std::function<void(RigidBody*, RigidBody*, float&)> OnCollisionTest;
-		// NOTE: can cause 1-10% performance decrease.
-		bool SortOnTests = false;	// Perform ALL collision tests in order based on distance between given objects.
 		
 		CollisionQuadTree(glm::vec2 w_min, glm::vec2 w_max);
 		// Note: Objects pointed to in quadtree should
@@ -184,10 +182,6 @@ namespace Physics2D
 		// Recursively inserts object into most suitable subtree.
 		void insertObject(Node* pTree, RigidBody* pObject);
 		void testAllCollisions(Node* pTree, float& dt);
-		void testAllCollisions_sort(Node* pTree, float& dt);
-		// Tests collision between pA and all objects in
-		// linked list in sorted order.
-		void testCollisions_sort(RigidBody* pA, RigidBody* pObjList, float& dt);
 		// Does the same as ObjectIsInWorld(), but it does so 
 		// on specific tree or subtree.
 		bool objectIsInTree(Node* pTree, RigidBody* pObject);

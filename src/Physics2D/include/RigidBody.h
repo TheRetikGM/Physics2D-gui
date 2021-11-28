@@ -125,8 +125,6 @@ namespace Physics2D
 		RigidBody* pNextObject = nullptr;	// For quadtree linked list of node objects.
 		void*	   pParentNode = nullptr;	// Pointer to parent node of the octree.
 		bool	   bIsDirty = false;		// Is set, whenever object should be updated in quadtree.
-		float	   dist = 0.0f;				// Distance sorting.
-		RigidBody* pNextSortNode = nullptr; // Distance sorting linked list.
 		// --------------------------------------------- //
 
 		// Can access protected fields and members.

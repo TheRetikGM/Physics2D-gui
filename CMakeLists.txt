@@ -39,5 +39,6 @@ elseif (UNIX)
         tinyxml2
         z
         debug tmxparserd optimized tmxparser
+	freetype
     )
 endif()
