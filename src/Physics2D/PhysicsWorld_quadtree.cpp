@@ -83,7 +83,7 @@ void CollisionQuadTree::insertObject(Node* pTree, RigidBody* pObject)
 	for (int i = 0; i < 2; i++)
 	{
 		float delta = aabb_center[i] - pTree->center[i];
-		float adelta = abs(delta);
+		float adelta = std::abs(delta);
 		if (adelta - aabb_hsize[i] < 0.0f || adelta + aabb_hsize[i] > pTree->halfSize[i]) {
 			straddle = 1;
 			break;
